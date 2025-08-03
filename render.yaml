@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: dvd-api-client
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 main.py web
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.3
+      - key: API_KEY
+        value: 7cd663fefd95cb7b434c1c5ec57c4e00c5d8ca2d68163bfb095c77488c14dbc8
+      - key: API_BASE_URL
+        value: https://sum.natsec.bot/api
+      - key: TELEGRAM_TOKEN
+        value: 8369793525:AAHjbxS_CD1dpR5D577Yeu1ld1KlndBHihI
+    healthCheckPath: /api/status
+    autoDeploy: true 

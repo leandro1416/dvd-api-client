@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DVD API Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .status-online {
+            background: #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .results-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .results-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 DVD API Client</h1>
+            <p>Busque credenciais por domínio, senha, usuário, URL ou mapeie rotas</p>
+        </div>
+
+        <div class="content">
+            <!-- Status da API -->
+            <div class="status-section">
+                <h3>Status da API</h3>
+                <div id="api-status">
+                    <span class="status-indicator status-offline"></span>
+                    <span id="status-text">Verificando...</span>
+                </div>
+            </div>
+
+            <!-- Formulário de Busca -->
+            <div class="search-section">
+                <h3>Buscar Credenciais</h3>
+                <form id="search-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="search-type">Tipo de Busca:</label>
+                            <select id="search-type" required>
+                                <option value="domain">Por Domínio</option>
+                                <option value="password">Por Senha</option>
+                                <option value="user">Por Usuário</option>
+                                <option value="url">Por URL</option>
+                                <option value="routes">Mapear Rotas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="search-term">Termo de Busca:</label>
+                            <input type="text" id="search-term" placeholder="Ex: exemplo.com.br" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="page">Página:</label>
+                            <input type="number" id="page" value="1" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="page-size">Itens por página:</label>
+                            <input type="number" id="page-size" value="500" min="1" max="5000">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn" id="search-btn">
+                        <span id="search-btn-text">🔍 Buscar</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Resultados -->
+            <div class="results-section" id="results-section" style="display: none;">
+                <div class="results-header">
+                    <h3>Resultados</h3>
+                    <div id="results-info"></div>
+                </div>
+                <div class="results-content">
+                    <div id="results-content">
+                        <div class="loading">Nenhum resultado ainda</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentSearchType = '';
+        let currentSearchTerm = '';
+
+        // Verificar status da API ao carregar
+        document.addEventListener('DOMContentLoaded', function() {
+            checkApiStatus();
+        });
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                const statusIndicator = document.querySelector('.status-indicator');
+                const statusText = document.getElementById('status-text');
+                
+                if (data.error) {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'API Offline';
+                } else {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = `API Online - ${data.status || 'Funcionando'}`;
+                }
+            } catch (error) {
+                const statusIndicator = document.querySelector('.status-indicator');
+                const statusText = document.getElementById('status-text');
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Erro de Conexão';
+            }
+        }
+
+        document.getElementById('search-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const searchType = document.getElementById('search-type').value;
+            const searchTerm = document.getElementById('search-term').value;
+            const page = parseInt(document.getElementById('page').value);
+            const pageSize = parseInt(document.getElementById('page-size').value);
+            
+            if (!searchTerm.trim()) {
+                alert('Por favor, insira um termo de busca');
+                return;
+            }
+            
+            // Atualizar estado
+            currentPage = page;
+            currentSearchType = searchType;
+            currentSearchTerm = searchTerm;
+            
+            // Mostrar loading
+            const searchBtn = document.getElementById('search-btn');
+            const searchBtnText = document.getElementById('search-btn-text');
+            searchBtn.disabled = true;
+            searchBtnText.innerHTML = '<span class="spinner"></span>Buscando...';
+            
+            // Mostrar seção de resultados
+            document.getElementById('results-section').style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: searchType,
+                        term: searchTerm,
+                        page: page,
+                        page_size: pageSize
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    showResults(data, searchType);
+                }
+            } catch (error) {
+                showError('Erro de conexão: ' + error.message);
+            } finally {
+                // Restaurar botão
+                searchBtn.disabled = false;
+                searchBtnText.textContent = '🔍 Buscar';
+            }
+        });
+
+        function showError(message) {
+            const resultsContent = document.getElementById('results-content');
+            resultsContent.innerHTML = `<div class="error">❌ ${message}</div>`;
+            document.getElementById('results-info').innerHTML = '';
+        }
+
+        function showResults(data, searchType) {
+            const resultsContent = document.getElementById('results-content');
+            const resultsInfo = document.getElementById('results-info');
+            
+            if (searchType === 'routes') {
+                // Mostrar rotas
+                const total = data.total || 0;
+                const pages = data.pages || 1;
+                const domain = data.dominio || '';
+                
+                resultsInfo.innerHTML = `
+                    <strong>Domínio:</strong> ${domain} | 
+                    <strong>Total de rotas:</strong> ${total} | 
+                    <strong>Página:</strong> ${data.page || 1} de ${pages}
+                `;
+                
+                if (data.rotas && data.rotas.length > 0) {
+                    let html = '<table class="table"><thead><tr><th>URL</th></tr></thead><tbody>';
+                    data.rotas.forEach(route => {
+                        html += `<tr><td>${route.url || 'N/A'}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    resultsContent.innerHTML = html;
+                } else {
+                    resultsContent.innerHTML = '<div class="loading">Nenhuma rota encontrada</div>';
+                }
+            } else {
+                // Mostrar credenciais
+                const total = data.total || 0;
+                const pages = data.pages || 1;
+                
+                resultsInfo.innerHTML = `
+                    <strong>Total:</strong> ${total} | 
+                    <strong>Página:</strong> ${data.page || 1} de ${pages}
+                `;
+                
+                if (data.data && data.data.length > 0) {
+                    let html = '<table class="table"><thead><tr><th>URL</th><th>Usuário</th><th>Senha</th></tr></thead><tbody>';
+                    data.data.forEach(cred => {
+                        html += `<tr>
+                            <td>${cred.url || 'N/A'}</td>
+                            <td>${cred.username || 'N/A'}</td>
+                            <td>${cred.password || 'N/A'}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    resultsContent.innerHTML = html;
+                } else {
+                    resultsContent.innerHTML = '<div class="loading">Nenhuma credencial encontrada</div>';
+                }
+            }
+            
+            // Atualizar paginação
+            totalPages = data.pages || 1;
+            updatePagination();
+        }
+
+        function updatePagination() {
+            const resultsContent = document.getElementById('results-content');
+            const currentContent = resultsContent.innerHTML;
+            
+            if (totalPages > 1) {
+                const pagination = `
+                    <div class="pagination">
+                        <button onclick="changePage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}>
+                            ← Anterior
+                        </button>
+                        <span>Página ${currentPage} de ${totalPages}</span>
+                        <button onclick="changePage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}>
+                            Próxima →
+                        </button>
+                    </div>
+                `;
+                resultsContent.innerHTML = currentContent + pagination;
+            }
+        }
+
+        async function changePage(newPage) {
+            if (newPage < 1 || newPage > totalPages) return;
+            
+            document.getElementById('page').value = newPage;
+            currentPage = newPage;
+            
+            // Executar busca novamente
+            const searchForm = document.getElementById('search-form');
+            const submitEvent = new Event('submit');
+            searchForm.dispatchEvent(submitEvent);
+        }
+    </script>
+</body>
+</html> 
